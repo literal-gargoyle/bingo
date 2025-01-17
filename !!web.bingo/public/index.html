@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo - bingo.webseal.us</title>
+    <style>
+        :root {
+            --primary: #06b6d4;
+            --background: #f8fafc;
+            --text: #1e293b;
+            --accent: #0ea5e9;
+            --card: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            text-align: center;
+            padding: 80px 20px 20px;
+        }
+
+        .navbar {
+            background: var(--card);
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .prompt-controls {
+            margin: 20px 0;
+        }
+
+        .prompt-controls input,
+        .prompt-controls button {
+            padding: 10px;
+            margin: 5px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .prompt-controls button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .prompt-controls button:hover {
+            background: var(--accent);
+        }
+
+        .bingo-card {
+            display: grid;
+            grid-gap: 5px;
+            margin: 20px auto;
+            justify-content: center;
+            max-width: 50%;
+        }
+
+        .bingo-cell {
+            aspect-ratio: 1;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background-color: #f9f9f9;
+            user-select: none;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-size: calc(14px + 0.2vw);
+        }
+
+        .bingo-cell.active {
+            background-color: #4caf50;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .bingo-cell input {
+            width: 90%;
+            border: none;
+            text-align: center;
+            background: transparent;
+            font-size: inherit;
+            font-family: inherit;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">Bingo - bingo.webseal.us</div>
+    </div>
+
+    <div class="container">
+        <h1>Welcome to bingo.webseal.us!</h1>
+
+        <div class="prompt-controls">
+            <input type="text" id="bingoPrompt" placeholder="Enter a prompt for your bingo card">
+            <button class="button" onclick="generateBingoFromPrompt()">Generate</button>
+            <br>
+            <label for="cardSizeInput">Card Size:</label>
+            <input type="number" id="cardSizeInput" min="2" max="10" value="5">
+        </div>
+
+        <div class="bingo-card" id="bingoCard"></div>
+
+        <div class="controls">
+            <button class="button" onclick="saveBingoCard()">Save</button>
+            <label for="loadFile" class="button">Load</label>
+            <input type="file" id="loadFile" accept=".bingo" onchange="loadBingoCard(event)">
+        </div>
+    </div>
+
+    <script>
+        let cardSize = 5;
+        const bingoCard = document.getElementById('bingoCard');
+
+        // Adjust card size dynamically
+        function updateGridSize(size) {
+            bingoCard.style.gridTemplateColumns = `repeat(${size}, minmax(50px, 1fr))`;
+        }
+
+        // Initialize Bingo Card
+        function createBingoCard(size) {
+            bingoCard.innerHTML = '';
+            updateGridSize(size);
+            for (let i = 0; i < size * size; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('bingo-cell');
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = `Item ${i + 1}`;
+                input.addEventListener('click', (e) => e.stopPropagation());
+
+                cell.appendChild(input);
+                cell.addEventListener('click', () => {
+                    cell.classList.toggle('active');
+                    checkForBingo(size);
+                });
+
+                bingoCard.appendChild(cell);
+            }
+        }
+
+        // Check for Bingo
+        function checkForBingo(size) {
+            const cells = Array.from(bingoCard.children);
+            const rows = Array.from({ length: size }, (_, i) => cells.slice(i * size, (i + 1) * size));
+            const cols = Array.from({ length: size }, (_, i) => cells.filter((_, j) => j % size === i));
+            const diag1 = cells.filter((_, i) => i % (size + 1) === 0);
+            const diag2 = cells.filter((_, i) => (i % (size - 1) === 0) && i > 0 && i < size * size - 1);
+
+            const lines = [...rows, ...cols, diag1, diag2];
+
+            for (const line of lines) {
+                if (line.every(cell => cell.classList.contains('active'))) {
+                    alert('Bingo!');
+                    return;
+                }
+            }
+        }
+
+        // Save and Load Functions remain unchanged...
+
+        // Initialize the card on page load
+        createBingoCard(cardSize);
+    </script>
+</body>
+</html>
