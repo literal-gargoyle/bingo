@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customizable Bingo Card</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        .bingo-card {
+            display: grid;
+            grid-template-columns: repeat(5, 100px);
+            grid-gap: 5px;
+            justify-content: center;
+        }
+        .bingo-cell {
+            width: 100px;
+            height: 100px;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background-color: #f9f9f9;
+            user-select: none;
+        }
+        .bingo-cell.active {
+            background-color: #4caf50;
+            color: white;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        input[type="file"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Customizable Bingo Card</h1>
+
+    <div class="bingo-card" id="bingoCard"></div>
+
+    <div class="controls">
+        <button onclick="saveBingoCard()">Save</button>
+        <label for="loadFile" class="button">Load</label>
+        <input type="file" id="loadFile" accept=".bingo" onchange="loadBingoCard(event)">
+    </div>
+
+    <script>
+        const cardSize = 5;
+        const bingoCard = document.getElementById('bingoCard');
+
+        // Initialize Bingo Card
+        function createBingoCard() {
+            for (let i = 0; i < cardSize * cardSize; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('bingo-cell');
+                cell.textContent = i + 1;
+                cell.addEventListener('click', () => {
+                    cell.classList.toggle('active');
+                });
+                bingoCard.appendChild(cell);
+            }
+        }
+
+        // Save Bingo Card State
+        function saveBingoCard() {
+            const cells = Array.from(bingoCard.children);
+            const state = cells.map(cell => cell.classList.contains('active'));
+            const blob = new Blob([JSON.stringify(state)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'bingo-card.bingo';
+            a.click();
+        }
+
+        // Load Bingo Card State
+        function loadBingoCard(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const state = JSON.parse(e.target.result);
+                const cells = Array.from(bingoCard.children);
+                state.forEach((active, i) => {
+                    if (active) {
+                        cells[i].classList.add('active');
+                    } else {
+                        cells[i].classList.remove('active');
+                    }
+                });
+            };
+            reader.readAsText(file);
+        }
+
+        // Initialize the card on page load
+        createBingoCard();
+    </script>
+</body>
+</html>
