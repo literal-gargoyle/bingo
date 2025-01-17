@@ -26,16 +26,39 @@
             cursor: pointer;
             background-color: #f9f9f9;
             user-select: none;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
         .bingo-cell.active {
             background-color: #4caf50;
             color: white;
+            transform: scale(1.1);
+        }
+        .bingo-cell input {
+            width: 90%;
+            border: none;
+            text-align: center;
+            background: transparent;
+            font-size: 16px;
+            font-family: inherit;
         }
         .controls {
             margin-top: 20px;
         }
         input[type="file"] {
             display: none;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
@@ -45,7 +68,7 @@
     <div class="bingo-card" id="bingoCard"></div>
 
     <div class="controls">
-        <button onclick="saveBingoCard()">Save</button>
+        <button class="button" onclick="saveBingoCard()">Save</button>
         <label for="loadFile" class="button">Load</label>
         <input type="file" id="loadFile" accept=".bingo" onchange="loadBingoCard(event)">
     </div>
@@ -59,10 +82,17 @@
             for (let i = 0; i < cardSize * cardSize; i++) {
                 const cell = document.createElement('div');
                 cell.classList.add('bingo-cell');
-                cell.textContent = i + 1;
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = `Item ${i + 1}`;
+                input.addEventListener('click', (e) => e.stopPropagation());
+
+                cell.appendChild(input);
                 cell.addEventListener('click', () => {
                     cell.classList.toggle('active');
                 });
+
                 bingoCard.appendChild(cell);
             }
         }
@@ -70,7 +100,14 @@
         // Save Bingo Card State
         function saveBingoCard() {
             const cells = Array.from(bingoCard.children);
-            const state = cells.map(cell => cell.classList.contains('active'));
+            const state = cells.map(cell => {
+                const input = cell.querySelector('input');
+                return {
+                    text: input.value,
+                    active: cell.classList.contains('active')
+                };
+            });
+
             const blob = new Blob([JSON.stringify(state)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
@@ -87,11 +124,14 @@
             reader.onload = function(e) {
                 const state = JSON.parse(e.target.result);
                 const cells = Array.from(bingoCard.children);
-                state.forEach((active, i) => {
-                    if (active) {
-                        cells[i].classList.add('active');
+                state.forEach((data, i) => {
+                    const cell = cells[i];
+                    const input = cell.querySelector('input');
+                    input.value = data.text;
+                    if (data.active) {
+                        cell.classList.add('active');
                     } else {
-                        cells[i].classList.remove('active');
+                        cell.classList.remove('active');
                     }
                 });
             };
